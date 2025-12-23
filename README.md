@@ -21,7 +21,7 @@ This project simulates real-world wallet operations such as user creation, credi
 
 📦 RESTful APIs tested using Postman
 
-# ech Stack
+# Tech Stack
 
 Java 17
 
