@@ -1,29 +1,20 @@
 /**
- * Wallet Transaction System - Modern Frontend
- * Production Ready (Render Hosted Backend)
- * Clean UI | Toast Notifications | No Raw JSON
+ * Wallet Transaction System - Frontend
+ * FINAL Production Version (Render)
  */
 
-// Backend API URL - Auto-detect based on current host
-const API_BASE_URL = window.location.hostname.includes('render.com') 
-    ? 'https://wallet-transaction-system.onrender.com/api'
-    : 'http://localhost:8081/api';
+/* =============================
+   BACKEND URL (FIXED)
+============================= */
+const API_BASE_URL = "https://wallet-transaction-system.onrender.com/api";
+
 let transactionHistory = [];
 let currentBalanceUserId = null;
 
 /* =============================
-   SAFE INIT AFTER DOM LOAD
+   INIT AFTER DOM LOAD
 ============================= */
 document.addEventListener("DOMContentLoaded", () => {
-
-    const debugToggle = document.getElementById("debugToggle");
-    if (debugToggle) {
-        debugToggle.addEventListener("change", (e) => {
-            document.querySelectorAll(".debug-output").forEach(el => {
-                el.style.display = e.target.checked ? "block" : "none";
-            });
-        });
-    }
 
     document.getElementById("clearHistoryBtn")?.addEventListener("click", () => {
         transactionHistory = [];
@@ -31,64 +22,56 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.getElementById("refreshBalanceBtn")?.addEventListener("click", () => {
-        if (currentBalanceUserId) {
-            checkBalance(currentBalanceUserId, false);
-        }
+        if (currentBalanceUserId) checkBalance(currentBalanceUserId, false);
     });
+
 });
 
 /* =============================
-   TOAST NOTIFICATION
+   FETCH WRAPPER (CORS SAFE)
 ============================= */
-function showToast(title, message, type = "info") {
-    const container = document.getElementById("toastContainer");
-    if (!container) return;
+async function apiFetch(url, options = {}) {
+    const res = await fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {})
+        }
+    });
 
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+    }
 
-    const icons = { success: "✅", error: "❌", info: "ℹ️" };
+    return res.json();
+}
 
-    toast.innerHTML = `
-        <div class="toast-icon">${icons[type]}</div>
-        <div class="toast-content">
-            <strong>${title}</strong>
-            <div>${message}</div>
-        </div>
-    `;
+/* =============================
+   TOAST
+============================= */
+function showToast(title, msg, type = "info") {
+    const c = document.getElementById("toastContainer");
+    if (!c) return;
 
-    container.appendChild(toast);
+    const t = document.createElement("div");
+    t.className = `toast ${type}`;
+    t.innerHTML = `<strong>${title}</strong><div>${msg}</div>`;
 
-    setTimeout(() => {
-        toast.classList.add("hiding");
-        setTimeout(() => toast.remove(), 300);
-    }, 4000);
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
 }
 
 /* =============================
    HELPERS
 ============================= */
-const formatCurrency = amt =>
-    new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(amt);
+const formatCurrency = a =>
+    new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(a);
 
-const formatDateTime = ts =>
-    new Date(ts).toLocaleString("en-IN");
-
-async function handleApiError(res) {
-    if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `HTTP ${res.status}`);
-    }
-    return res.json();
-}
-
-function showDebug(id, data) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = JSON.stringify(data, null, 2);
-}
+const formatDate = ts => new Date(ts).toLocaleString("en-IN");
 
 /* =============================
-   TRANSACTION HISTORY
+   TRANSACTIONS
 ============================= */
 function addToHistory(tx) {
     transactionHistory.unshift(tx);
@@ -97,22 +80,19 @@ function addToHistory(tx) {
 }
 
 function renderTransactionHistory() {
-    const container = document.getElementById("transactionHistory");
-    if (!container) return;
+    const c = document.getElementById("transactionHistory");
+    if (!c) return;
 
     if (!transactionHistory.length) {
-        container.innerHTML = `<p class="empty">No transactions yet</p>`;
+        c.innerHTML = "<p>No transactions yet</p>";
         return;
     }
 
-    container.innerHTML = transactionHistory.map(tx => `
-        <div class="transaction ${tx.type.toLowerCase()}">
-            <div>
-                <strong>${tx.type}</strong>
-                <span>${tx.status}</span>
-            </div>
+    c.innerHTML = transactionHistory.map(tx => `
+        <div class="tx ${tx.type.toLowerCase()}">
+            <strong>${tx.type}</strong>
             <div>${formatCurrency(tx.amount)}</div>
-            <small>${formatDateTime(tx.timestamp)}</small>
+            <small>${tx.status} | ${formatDate(tx.timestamp)}</small>
         </div>
     `).join("");
 }
@@ -127,25 +107,31 @@ function updateBalance(userId, balance) {
     currentBalanceUserId = userId;
 }
 
+function checkBalance(userId, toast = true) {
+    apiFetch(`${API_BASE_URL}/wallet/${userId}`)
+        .then(d => {
+            updateBalance(d.userId, d.balance);
+            if (toast) showToast("Balance", formatCurrency(d.balance));
+        })
+        .catch(e => showToast("Error", e.message, "error"));
+}
+
 /* =============================
    CREATE USER
 ============================= */
 document.getElementById("createUserForm")?.addEventListener("submit", async e => {
     e.preventDefault();
 
-    const name = userName.value.trim();
-    const email = userEmail.value.trim();
-
     try {
-        const res = await fetch(`${API_BASE_URL}/users`, {
+        const data = await apiFetch(`${API_BASE_URL}/users`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, email })
+            body: JSON.stringify({
+                name: userName.value.trim(),
+                email: userEmail.value.trim()
+            })
         });
 
-        const data = await handleApiError(res);
         showToast("User Created", `${data.name} (ID: ${data.id})`, "success");
-        showDebug("createUserDebug", data);
         e.target.reset();
 
     } catch (err) {
@@ -159,22 +145,20 @@ document.getElementById("createUserForm")?.addEventListener("submit", async e =>
 document.getElementById("creditForm")?.addEventListener("submit", async e => {
     e.preventDefault();
 
-    const userId = +creditUserId.value;
-    const amount = +creditAmount.value;
-
     try {
-        const res = await fetch(`${API_BASE_URL}/transactions/credit`, {
+        const tx = await apiFetch(`${API_BASE_URL}/transactions/credit`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, amount })
+            body: JSON.stringify({
+                userId: +creditUserId.value,
+                amount: +creditAmount.value
+            })
         });
 
-        const tx = await handleApiError(res);
         addToHistory(tx);
-        showToast("Credited", formatCurrency(amount), "success");
-        if (currentBalanceUserId === userId) checkBalance(userId, false);
-
+        showToast("Credited", formatCurrency(tx.amount), "success");
+        if (currentBalanceUserId === tx.userId) checkBalance(tx.userId, false);
         e.target.reset();
+
     } catch (err) {
         showToast("Credit Failed", err.message, "error");
     }
@@ -186,41 +170,28 @@ document.getElementById("creditForm")?.addEventListener("submit", async e => {
 document.getElementById("debitForm")?.addEventListener("submit", async e => {
     e.preventDefault();
 
-    const userId = +debitUserId.value;
-    const amount = +debitAmount.value;
-
     try {
-        const res = await fetch(`${API_BASE_URL}/transactions/debit`, {
+        const tx = await apiFetch(`${API_BASE_URL}/transactions/debit`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, amount })
+            body: JSON.stringify({
+                userId: +debitUserId.value,
+                amount: +debitAmount.value
+            })
         });
 
-        const tx = await handleApiError(res);
         addToHistory(tx);
-        showToast("Debited", formatCurrency(amount), "success");
-        if (currentBalanceUserId === userId) checkBalance(userId, false);
-
+        showToast("Debited", formatCurrency(tx.amount), "success");
+        if (currentBalanceUserId === tx.userId) checkBalance(tx.userId, false);
         e.target.reset();
+
     } catch (err) {
         showToast("Debit Failed", err.message, "error");
     }
 });
 
 /* =============================
-   CHECK BALANCE
+   BALANCE FORM
 ============================= */
-function checkBalance(userId, toast = true) {
-    fetch(`${API_BASE_URL}/wallet/${userId}`)
-        .then(handleApiError)
-        .then(data => {
-            updateBalance(data.userId, data.balance);
-            if (toast) showToast("Balance", formatCurrency(data.balance), "info");
-            showDebug("balanceDebug", data);
-        })
-        .catch(err => showToast("Error", err.message, "error"));
-}
-
 document.getElementById("balanceForm")?.addEventListener("submit", e => {
     e.preventDefault();
     checkBalance(+balanceUserId.value, true);
