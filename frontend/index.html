@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Transaction System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Toast Notification Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Debug Toggle (Top Right) -->
+    <div class="debug-toggle">
+        <label>
+            <input type="checkbox" id="debugToggle">
+            <span>Show JSON Debug</span>
+        </label>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>💳 Wallet Transaction System</h1>
+                <p class="subtitle">Secure Financial Transactions</p>
+            </div>
+        </header>
+
+        <!-- Wallet Balance Display Card -->
+        <section class="balance-card" id="balanceDisplayCard" style="display: none;">
+            <div class="balance-header">
+                <h2>Wallet Balance</h2>
+                <button class="refresh-btn" id="refreshBalanceBtn" title="Refresh Balance">🔄</button>
+            </div>
+            <div class="balance-content">
+                <div class="balance-amount" id="balanceAmount">₹0.00</div>
+                <div class="balance-user" id="balanceUserInfo">User ID: -</div>
+            </div>
+        </section>
+
+        <!-- Main Content Grid -->
+        <div class="main-grid">
+            <!-- Left Column: Actions -->
+            <div class="actions-column">
+                <!-- Create User Card -->
+                <div class="action-card">
+                    <div class="card-icon">👤</div>
+                    <h3>Create User</h3>
+                    <p class="card-description">Register a new user and auto-create wallet</p>
+                    <form id="createUserForm" class="form">
+                        <div class="form-group">
+                            <label for="userName">Full Name</label>
+                            <input type="text" id="userName" name="name" required placeholder="John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="userEmail">Email Address</label>
+                            <input type="email" id="userEmail" name="email" required placeholder="john@example.com">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span>Create User</span>
+                        </button>
+                    </form>
+                    <div id="createUserDebug" class="debug-output" style="display: none;"></div>
+                </div>
+
+                <!-- Credit Card -->
+                <div class="action-card">
+                    <div class="card-icon">💰</div>
+                    <h3>Credit Wallet</h3>
+                    <p class="card-description">Add money to user's wallet</p>
+                    <form id="creditForm" class="form">
+                        <div class="form-group">
+                            <label for="creditUserId">User ID</label>
+                            <input type="number" id="creditUserId" name="userId" required placeholder="1" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="creditAmount">Amount (₹)</label>
+                            <input type="number" id="creditAmount" name="amount" required placeholder="100.00" step="0.01" min="0.01">
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <span>Credit Amount</span>
+                        </button>
+                    </form>
+                    <div id="creditDebug" class="debug-output" style="display: none;"></div>
+                </div>
+
+                <!-- Debit Card -->
+                <div class="action-card">
+                    <div class="card-icon">💸</div>
+                    <h3>Debit Wallet</h3>
+                    <p class="card-description">Deduct money from user's wallet</p>
+                    <form id="debitForm" class="form">
+                        <div class="form-group">
+                            <label for="debitUserId">User ID</label>
+                            <input type="number" id="debitUserId" name="userId" required placeholder="1" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="debitAmount">Amount (₹)</label>
+                            <input type="number" id="debitAmount" name="amount" required placeholder="50.00" step="0.01" min="0.01">
+                        </div>
+                        <button type="submit" class="btn btn-danger">
+                            <span>Debit Amount</span>
+                        </button>
+                    </form>
+                    <div id="debitDebug" class="debug-output" style="display: none;"></div>
+                </div>
+
+                <!-- Check Balance Card -->
+                <div class="action-card">
+                    <div class="card-icon">📊</div>
+                    <h3>Check Balance</h3>
+                    <p class="card-description">View current wallet balance</p>
+                    <form id="balanceForm" class="form">
+                        <div class="form-group">
+                            <label for="balanceUserId">User ID</label>
+                            <input type="number" id="balanceUserId" name="userId" required placeholder="1" min="1">
+                        </div>
+                        <button type="submit" class="btn btn-info">
+                            <span>Check Balance</span>
+                        </button>
+                    </form>
+                    <div id="balanceDebug" class="debug-output" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Right Column: Transaction History -->
+            <div class="history-column">
+                <div class="history-card">
+                    <div class="history-header">
+                        <h3>📜 Transaction History</h3>
+                        <button class="btn-small" id="clearHistoryBtn">Clear</button>
+                    </div>
+                    <div id="transactionHistory" class="transaction-list">
+                        <div class="empty-state">
+                            <p>No transactions yet</p>
+                            <small>Transactions will appear here after credit/debit operations</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
