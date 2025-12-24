@@ -31,3 +31,10 @@ app:
     topic:
       transaction: wallet-transactions
 
+server:
+  port: ${PORT:8080}
+
+
+
+      
+
