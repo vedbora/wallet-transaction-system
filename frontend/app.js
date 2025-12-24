@@ -5,7 +5,10 @@
  * No raw JSON shown to users (optional debug toggle available)
  */
 
-const API_BASE_URL = 'http://localhost:8081/api';
+// Backend API URL - Auto-detect based on current host
+const API_BASE_URL = window.location.hostname.includes('render.com') 
+    ? 'https://wallet-transaction-system.onrender.com/api'
+    : 'http://localhost:8081/api';
 let transactionHistory = [];
 let currentBalanceUserId = null;
 
